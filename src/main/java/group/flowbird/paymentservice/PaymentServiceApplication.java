@@ -38,11 +38,14 @@ public class PaymentServiceApplication {
 	public static void main(String[] args) {
         logger.info("Starting Spring Boot application : PaymentService");
         ConfigurableApplicationContext context = SpringApplication.run(PaymentServiceApplication.class, args);
-
+        BillingRestClient billingRestClient = context.getBean(BillingRestClient.class);
+        billingRestClient.getInvoice(1340L);
+        /*
         PaymentProcessor paymentProcessor = context.getBean(PaymentProcessor.class);
         YellowSoapRestClient yellowSoapRestClient = context.getBean(YellowSoapRestClient.class);
         yellowSoapRestClient.activateCustomer(234353L);
-        //paymentProcessor.processRedirectURL(6354551L);
+        paymentProcessor.processRedirectURL(6354551L);
+        */
 	}
 
     @Bean

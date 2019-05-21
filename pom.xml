@@ -11,7 +11,7 @@
 	<groupId>group.flowbird</groupId>
 	<artifactId>payment-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+	<packaging>jar</packaging>
 	<name>payment-service</name>
 	<description>provides solutions and functionalities for payment related apps</description>
 

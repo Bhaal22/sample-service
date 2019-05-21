@@ -13,6 +13,7 @@ import nl.yellowbrick.buckarooclient.dto.BuckarooTransactionResponse;
 import nl.yellowbrick.buckarooclient.model.IbanValidationRequest;
 import nl.yellowbrick.buckarooclient.payment.BuckarooInvoicePaymentTransaction;
 import nl.yellowbrick.buckarooclient.service.IbanValidationService;
+import org.apache.logging.log4j.message.StringFormattedMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +47,12 @@ public class PaymentProcessor {
 
     public String processPaymentTransaction(String transactionId, BuckarooDTO.Status status, String paymentKey){
 
-        if(null == status || ! status.getCode().getCode().equals(BuckarooDTO.TRANSACTION_STATUS_SUCCESS)){
+        if(null == status || ! BuckarooDTO.isSuccessfulTransaction(status.getCode().getCode())){
+            if(null == status){
+                logger.error("status object is null");
+            }
+            else logger.error(String.format("Status code = %d", status.getCode().getCode()));
+
             return paymentReminderConfiguration.getPaymentUnsuccessful();
         }
 
@@ -58,6 +64,7 @@ public class PaymentProcessor {
          * First check if the Transaction is already processed by callback or push
          */
         if(BuckarooDTO.isSuccessfulTransaction(ibanValidationRequest.getResponseCode()) && null != ibanValidationRequest.getPaymentKey()){
+            logger.info("This transaction is already processed and successful");
             return paymentReminderConfiguration.getPaymentSuccessful();
         }
 
@@ -70,20 +77,23 @@ public class PaymentProcessor {
         /*
          * Update Invoice status
          */
-        InvoiceDTO invoiceDTO = new InvoiceDTO();
+        InvoiceDTO invoiceDTO = billingRestClient.getInvoice(Long.valueOf(ibanValidationRequest.getInvoiceId()));
         invoiceDTO.setPaidOn(Calendar.getInstance().getTime());
-        invoiceDTO.setId(Long.valueOf(ibanValidationRequest.getInvoiceId()));
+        invoiceDTO.setPaid(true);
+
         billingRestClient.updateInvoice(invoiceDTO);
         /*
          * Check if there is still outstanding payment
          */
         if(billingRestClient.hasOutStandingInvoice(invoiceDTO.getId())){
+            logger.info("The customer has still some outstanding invoice");
             return paymentReminderConfiguration.getPaymentSuccessfulStillOutstanding();
         }
 
         /*
          * activate the customer
          */
+        logger.info(String.format("Activating customer, customer id = %d", invoiceDTO.getCustomerId()));
         try {
             yellowSoapRestClient.activateCustomer(invoiceDTO.getCustomerId());
         }catch (ResourceAccessException ex){
@@ -95,7 +105,7 @@ public class PaymentProcessor {
             logger.error("Some unknown exception occurred, couldn't communicate with yellow  soap");
             return paymentReminderConfiguration.getServerError();
         }
-
+        logger.info(String.format("Successfully activated customer , customer id = %d", invoiceDTO.getCustomerId()));
         return paymentReminderConfiguration.getPaymentSuccessful();
     }
 
@@ -106,8 +116,10 @@ public class PaymentProcessor {
          */
         String transactionId = ibanValidationService.getTransactionIdFromCallbackURL(callbackKey);
         BuckarooTransactionResponse response = getTransactionResponse(transactionId);
-        //return processPaymentTransaction(response);
-        return processPaymentTransaction(response.getKey(), response.getStatus(), response.getPaymentKey());
+        logger.info(String.format("Processing Buckaroo Transaction with callback Key = %s", callbackKey));
+        String callbackResponseURL = processPaymentTransaction(response.getKey(), response.getStatus(), response.getPaymentKey());
+        logger.info(String.format("Received callback String = %s after processing", callbackResponseURL));
+        return callbackResponseURL;
     }
 
     public void processPushURL(BuckarooPushRequest request){
@@ -141,12 +153,18 @@ public class PaymentProcessor {
             return paymentReminderConfiguration.getNoOutstandingInvoice();
         }
 
-        // temporary call
-        if(null != invoiceDTO.getPaidOn()){
+        if(invoiceDTO.isPaid()){
             return paymentReminderConfiguration.getCurrentInvoicePaidStillOutstanding();
         }
+
+        if(!invoiceDTO.isInPaymentReminder()){
+            /*
+             * Payment Reminder link is expired
+             */
+            return paymentReminderConfiguration.getPaymentReminderLinkExpired();
+        }
         /*
-         * Initiate Payment
+         * Everything is good, now we can initiate Payment
          */
         return initiateBuckarooPaymentRedirect(invoiceDTO);
     }
@@ -163,7 +181,8 @@ public class PaymentProcessor {
                 invoiceDTO.getCustomerId(),
                 applicationConfiguration.getName(),
                 String.valueOf(invoiceDTO.getId()),
-                Double.valueOf(invoiceDTO.getAmount()),
+                //invoiceDTO.getAmount(),
+                .01,
                 defaultLocale
         );
         return ibanValidationRequest.getRedirectUrl();
