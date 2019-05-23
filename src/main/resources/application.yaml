@@ -1,0 +1,21 @@
+billing-rest:
+  endpointPrefix: ${app.billingServerPrefix}/billing/rest/v1/paymentReminder
+  getInvoice: ${billing-rest.endpointPrefix}/getInvoice
+  hasOutstandingInvoice: ${billing-rest.endpointPrefix}/hasOutstandingInvoice
+  sendInvoicePaymentInfo: ${billing-rest.endpointPrefix}/sendInvoicePaymentInfo
+
+payment-reminder:
+  urlPrefix: ${app.myYellowbrickServerPrefix}/payment_reminder_status
+  noOutstandingInvoice: ${payment-reminder.urlPrefix}/reminder_already_paid
+  paymentSuccessful: ${payment-reminder.urlPrefix}/reminder_thankyou
+  paymentUnsuccessful: ${payment-reminder.urlPrefix}/reminder_payment_failed
+  paymentSuccessfulStillOutstanding: ${payment-reminder.urlPrefix}/reminder_outstanding_invoice
+  paymentReminderLinkExpired: ${payment-reminder.urlPrefix}/reminder_payment_period_expired
+  invalidInvoiceId: ${payment-reminder.urlPrefix}/payment_reminder_label_invalid_invoice_id
+  currentInvoicePaidStillOutstanding : ${payment-reminder.urlPrefix}/payment_reminder_label_current_invoice_paid_but_still_outstanding
+  serverError : ${payment-reminder.urlPrefix}/payment_reminder_label_something_is_wrong_with_the_server_please_try_again
+
+app:
+  name: payment_service
+  activateCustomerEndpointPrefix: ${app.yellowsoapServerPrefix}/activateCustomer
+  yellowsoapToken: 9U8Qmuj3EfiPFGnstJUrwjzAwu683YiN
