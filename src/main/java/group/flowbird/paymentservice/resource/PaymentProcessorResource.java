@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 
 @RestController
@@ -56,12 +55,19 @@ public class PaymentProcessorResource {
      * @param jsonBody : contains TransactionResponse JsonString
      * @return : nothing.
      */
-    @PostMapping("/process_post_payment/push/{status : (success|fail)}")
-    public void processPushURL(@PathVariable("status") String status, @RequestBody String jsonBody){
+    @PostMapping("/process_post_payment/push/{status}")
+    public ResponseEntity processPushURL(@PathVariable("status") String status, @RequestBody String jsonBody){
         logger.info(String.format("Rest Request start : endpoint = %s/%s", "/process_post_payment/push", status));
+        if(null == status || !status.equals("success") && !status.equals("fail")){
+            return ResponseEntity.badRequest().body("Invalid Endpoint");
+        }
         BuckarooPushRequest request = RestUtils.mapObjectFromString(jsonBody, BuckarooPushRequest.class);
+        if(null == request || null == request.getTransaction() || null == request.getTransactionId()){
+           return ResponseEntity.badRequest().body("Invalid Data");
+        }
         paymentProcessor.processPushURL(request);
         logger.info(String.format("Rest Request end : endpoint = %s/%s", "/process_post_payment/push", status));
+        return ResponseEntity.ok("Processed");
     }
 
     /**
