@@ -2,6 +2,8 @@ package group.flowbird.paymentservice.resource;
 
 import group.flowbird.paymentservice.RestUtil;
 import group.flowbird.paymentservice.processor.PaymentProcessor;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import nl.yellowbrick.buckarooclient.dto.BuckarooPushRequest;
 import nl.yellowbrick.buckarooclient.utils.RestUtils;
 import org.slf4j.Logger;
@@ -15,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/v1/payment_processor")
+@Api
 public class PaymentProcessorResource {
 
     @Autowired
@@ -28,10 +31,12 @@ public class PaymentProcessorResource {
      * @return : expect a simple return string 'OK'
      */
     @GetMapping("/{id}")
+    @ApiOperation("/{id}")
     public ResponseEntity<String> getPaymentStatus(@PathVariable("id") Long id){
         logger.info(String.format("Rest Request start : endpoint = /%d", id));
         logger.info(String.format("Rest Request end : endpoint = /%d", id));
         return ResponseEntity.ok().body("OK");
+
     }
 
 
@@ -42,6 +47,7 @@ public class PaymentProcessorResource {
      * @return : redirects to proper status message in MyYellowbrick
      */
     @RequestMapping(value = "/process_post_payment/callback/{callbackKey}", method = {RequestMethod.POST, RequestMethod.GET})
+    @ApiOperation("/process_post_payment/callback/{callbackKey}")
     public ResponseEntity<String> processCallback(@PathVariable("callbackKey") String callbackKey, HttpServletResponse response){
         logger.info(String.format("Rest Request start : endpoint = %s,  callbackKey = %s", "/process_post_payment/callback/{callbackKey}", callbackKey));
         String redirectURL = paymentProcessor.processCallbackByCallbackKey(callbackKey);
@@ -56,6 +62,7 @@ public class PaymentProcessorResource {
      * @return : nothing.
      */
     @PostMapping("/process_post_payment/push/{status}")
+    @ApiOperation("/process_post_payment/push/{status}")
     public ResponseEntity processPushURL(@PathVariable("status") String status, @RequestBody String jsonBody){
         logger.info(String.format("Rest Request start : endpoint = %s/%s", "/process_post_payment/push", status));
         if(null == status || !status.equals("success") && !status.equals("fail")){
@@ -77,6 +84,7 @@ public class PaymentProcessorResource {
      * @return
      */
     @GetMapping("/initiate_payment/{invoiceId}")
+    @ApiOperation("/initiate_payment/{invoiceId}")
     public ResponseEntity<String> initiatePayment(@PathVariable("invoiceId") Long invoiceId, HttpServletResponse response){
         logger.info(String.format("Rest Request start : endpoint = %s/%d", "/initiate_payment", invoiceId));
         String redirectURL = paymentProcessor.processRedirectURL(invoiceId);

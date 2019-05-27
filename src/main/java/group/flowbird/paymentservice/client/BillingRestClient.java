@@ -42,6 +42,12 @@ public class BillingRestClient {
         invoiceDTO = restClient.performRequest("", HttpMethod.GET, url, InvoiceDTO.class);
         return invoiceDTO;
     }
+
+    public boolean hasOutStandingInvoiceByInvoiceId(Long invoiceId){
+        Long customerId = getCustomerId(invoiceId);
+        return hasOutStandingInvoice(customerId);
+    }
+
     public boolean hasOutStandingInvoice(Long customerId) {
         String url = billingConfiguration.getHasOutstandingInvoice() + "/" + customerId;
         return restClient.performRequest("", HttpMethod.GET, url, Boolean.class);

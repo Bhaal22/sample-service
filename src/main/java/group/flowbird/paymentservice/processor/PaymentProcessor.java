@@ -88,7 +88,7 @@ public class PaymentProcessor {
         /*
          * Step 5 : Check whether we can proceed or not, we can't activate customer if there is outstanding invoice.
          */
-        if(billingRestClient.hasOutStandingInvoice(invoiceId)){
+        if(billingRestClient.hasOutStandingInvoiceByInvoiceId(invoiceId)){
             return paymentReminderConfiguration.getPaymentSuccessfulStillOutstanding();
         }
 
