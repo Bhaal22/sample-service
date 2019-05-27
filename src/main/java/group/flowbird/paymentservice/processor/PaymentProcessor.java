@@ -119,7 +119,17 @@ public class PaymentProcessor {
         /*
          * Please accept the ambiguity that callback key is actually stored as callback URL for faster query, definitely not the ideal way
          */
+        if(null == callbackKey){
+            logger.error("We can't allow you to fool us, please try with a callback Key");
+            return paymentReminderConfiguration.getServerError();
+        }
+
         String transactionId = ibanValidationService.getTransactionIdFromCallbackURL(callbackKey);
+        if(null == transactionId){
+            logger.error("Something went wrong horribly, We couldn't find any transaction id associated with the provided callback key");
+            return paymentReminderConfiguration.getServerError();
+        }
+
         BuckarooTransactionResponse response = getTransactionResponse(transactionId);
         logger.info(String.format("Processing Buckaroo Transaction with callback Key = %s", callbackKey));
         String callbackResponseURL = processPaymentTransaction(response.getKey(), response.getStatus(), response.getPaymentKey());
