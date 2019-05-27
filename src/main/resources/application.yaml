@@ -19,3 +19,7 @@ app:
   name: payment_service
   activateCustomerEndpointPrefix: ${app.yellowsoapServerPrefix}/activateCustomer
   yellowsoapToken: 9U8Qmuj3EfiPFGnstJUrwjzAwu683YiN
+
+  ##default log path, please override from project home directory /config application.yaml (in corresponding profile)
+logging:
+  path: /var/log/payment-service

@@ -248,6 +248,10 @@ public class PaymentProcessor {
                 .01,
                 defaultLocale
         );
+
+        if(null == ibanValidationRequest){
+            return paymentReminderConfiguration.getServerError();
+        }
         return ibanValidationRequest.getRedirectUrl();
     }
 }

@@ -8,6 +8,15 @@ app:
     myYellowbrickServerPrefix: https://be-sit.brickparking.com/MyYellowbrick
     yellowsoapServerPrefix: https://be-sit.brickparking.com/YellowSoap/rest/v1
 
+    ####################### Logging Configuration #######################
+
+logging:
+  path: /var/log/brickparking/payment-service
+  level:
+    root: info
+    group.flowbird.paymentservice: debug
+
+
     ####################### Database Configuration #######################
 spring:
   datasource:
