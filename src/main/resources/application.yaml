@@ -23,3 +23,14 @@ app:
   ##default log path, please override from project home directory /config application.yaml (in corresponding profile)
 logging:
   path: /var/log/payment-service
+
+management:
+  metrics:
+  export:
+    prometheus:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: prometheus,info,metrics,threaddump
+
