@@ -1,0 +1,26 @@
+    ####################### Service Configuration #######################
+server:
+    port: 80
+
+    ####################### Service Discovery Configuration #######################
+app:
+    billingServerPrefix: https://de-acc.brickparking.com
+    myYellowbrickServerPrefix: https://de-acc.brickparking.com/MyYellowbrick
+    yellowsoapServerPrefix: https://de-acc.brickparking.com/YellowSoap/rest/v1
+
+    ####################### Logging Configuration #######################
+
+logging:
+  path: /var/log/brickparking/payment-service
+  level:
+    root: info
+    group.flowbird.paymentservice: debug
+
+
+    ####################### Database Configuration #######################
+spring:
+  datasource:
+    driverClassName: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@(DESCRIPTION = (FAILOVER = ON)(LOAD_BALANCE = ON)(ADDRESS = (PROTOCOL = TCP)(HOST = scan-ybi-tst.waysis.local)(PORT = 1521)) (ADDRESS = (PROTOCOL = TCP)(HOST = scan-ybi-tst.waysis.local)(PORT = 1521))(CONNECT_DATA = (SERVER = DEDICATED)(SERVICE_NAME = TELEPAY)(FAILOVER_MODE=(TYPE=select)(METHOD=basic))))
+    username: ACC_DE_BRICKPARKING
+    password: ACC_DE_BRICKPARKING
