@@ -42,6 +42,8 @@ public class PaymentProcessor {
     @Autowired
     YellowSoapRestClient yellowSoapRestClient;
 
+    Locale locale;
+
     /**
      * Post Payment Transaction processor, used by both push success, fail and callback.
      * We could use TransactionResponse but apparently we use TransactionResponse and BuckarooTransactionRequest for callback and push
@@ -57,7 +59,7 @@ public class PaymentProcessor {
          * Step 1 : check if the payment is successful or not
          */
         if(paymentIsUnsuccessful(status)){
-            return paymentReminderConfiguration.getPaymentUnsuccessful();
+            return paymentReminderConfiguration.getPaymentUnsuccessful() + getLocale();
         }
 
         /*
@@ -82,14 +84,14 @@ public class PaymentProcessor {
         Long invoiceId = Long.valueOf(ibanValidationRequest.getInvoiceId());
         if(!billingRestClient.updateInvoiceToPaid(invoiceId)){
             logger.info("Couldn't update Invoice status to Paid, probable cause is : Billing Server is down");
-            return paymentReminderConfiguration.getServerError();
+            return paymentReminderConfiguration.getServerError() + getLocale();
         }
 
         /*
          * Step 5 : Check whether we can proceed or not, we can't activate customer if there is outstanding invoice.
          */
         if(billingRestClient.hasOutStandingInvoiceByInvoiceId(invoiceId)){
-            return paymentReminderConfiguration.getPaymentSuccessfulStillOutstanding();
+            return paymentReminderConfiguration.getPaymentSuccessfulStillOutstanding() + getLocale();
         }
 
         /*
@@ -105,7 +107,7 @@ public class PaymentProcessor {
         /*
          * Step 6 : Final Step : Everything went perfect. Lets convey the message that payment is successful, congrats ;)
          */
-        return paymentReminderConfiguration.getPaymentSuccessful();
+        return paymentReminderConfiguration.getPaymentSuccessful() + getLocale();
     }
 
     /**
@@ -131,6 +133,8 @@ public class PaymentProcessor {
         }
 
         BuckarooTransactionResponse response = getTransactionResponse(transactionId);
+        String invoiceId = response.getInvoice();
+        updateLocaleIfYouCan(invoiceId);
         logger.info(String.format("Processing Buckaroo Transaction with callback Key = %s", callbackKey));
         String callbackResponseURL = processPaymentTransaction(response.getKey(), response.getStatus(), response.getPaymentKey());
         logger.info(String.format("Received callback String = %s after processing", callbackResponseURL));
@@ -159,35 +163,36 @@ public class PaymentProcessor {
      */
     public String processRedirectURL(Long invoiceId){
         InvoiceDTO invoiceDTO = billingRestClient.getInvoice(invoiceId);
+        updateLocaleIfYouCan(invoiceDTO);
 
         if(billingRestClient.hasRemoteServerErrorOccurred()){
-            return paymentReminderConfiguration.getServerError();
+            return paymentReminderConfiguration.getServerError() + getLocale();
         }
 
         if(null == invoiceDTO){
-            return paymentReminderConfiguration.getInvalidInvoiceId();
+            return paymentReminderConfiguration.getInvalidInvoiceId() + getLocale();
         }
 
         boolean hasoutStandingInvoice = true;
         hasoutStandingInvoice = billingRestClient.hasOutStandingInvoice(invoiceDTO.getCustomerId());
 
         if(billingRestClient.hasRemoteServerErrorOccurred()){
-            return paymentReminderConfiguration.getServerError();
+            return paymentReminderConfiguration.getServerError() + getLocale();
         }
 
         if(false == hasoutStandingInvoice){
-            return paymentReminderConfiguration.getNoOutstandingInvoice();
+            return paymentReminderConfiguration.getNoOutstandingInvoice() + getLocale();
         }
 
         if(invoiceDTO.isPaid()){
-            return paymentReminderConfiguration.getCurrentInvoicePaidStillOutstanding();
+            return paymentReminderConfiguration.getCurrentInvoicePaidStillOutstanding() + getLocale();
         }
 
         if(!invoiceDTO.isInPaymentReminder()){
             /*
              * Payment Reminder link is expired
              */
-            return paymentReminderConfiguration.getPaymentReminderLinkExpired();
+            return paymentReminderConfiguration.getPaymentReminderLinkExpired() + getLocale();
         }
         /*
          * Everything is good, now we can initiate Payment
@@ -249,6 +254,26 @@ public class PaymentProcessor {
         return (BuckarooTransactionResponse) buckarooClient.getPaymentTransactionStatus(transactionId);
     }
 
+    private String getLocale(){
+        if(null == locale)return "";
+        return "?locale=" + locale.getLanguage() + "_" + locale.getCountry();
+    }
+
+
+    private void updateLocaleIfYouCan(InvoiceDTO invoiceDTO){
+        if(null != invoiceDTO && null != invoiceDTO.getLocale() && !invoiceDTO.getLocale().isEmpty()){
+            String localeString = invoiceDTO.getLocale();
+            String localeStrings[] = localeString.split("_");
+            String newLocaleString = localeStrings[0] + "-" + localeStrings[1];
+            this.locale = new Locale.Builder().setLanguageTag(newLocaleString).build();
+        }
+    }
+
+    private void updateLocaleIfYouCan(String invoiceId){
+        InvoiceDTO invoiceDTO = billingRestClient.getInvoice(Long.valueOf(invoiceId));
+        updateLocaleIfYouCan(invoiceDTO);
+    }
+
     private String initiateBuckarooPaymentRedirect(InvoiceDTO invoiceDTO){
         IbanValidationRequest ibanValidationRequest = ibanValidationService.redirectToIbanValidationThirdParty(
                 invoiceDTO.getCustomerId(),
@@ -260,7 +285,7 @@ public class PaymentProcessor {
         );
 
         if(null == ibanValidationRequest){
-            return paymentReminderConfiguration.getServerError();
+            return paymentReminderConfiguration.getServerError() + getLocale();
         }
         return ibanValidationRequest.getRedirectUrl();
     }

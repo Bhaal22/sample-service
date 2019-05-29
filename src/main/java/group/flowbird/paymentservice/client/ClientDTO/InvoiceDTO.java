@@ -14,4 +14,5 @@ public class InvoiceDTO {
     private Date paidOn;
     private boolean isPaid;
     private boolean inPaymentReminder;
+    private String locale;
 }
