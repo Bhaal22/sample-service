@@ -17,4 +17,5 @@ public class PaymentReminderConfiguration {
     private String invalidInvoiceId;
     private String paymentReminderLinkExpired;
     private String serverError;
+    private String paymentSuccessfulButFailedToProcess;
 }

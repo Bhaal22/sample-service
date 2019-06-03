@@ -1,4 +1,4 @@
-billing-rest:
+ billing-rest:
   endpointPrefix: ${app.billingServerPrefix}/billing/rest/v1/paymentReminder
   getInvoice: ${billing-rest.endpointPrefix}/getInvoice
   hasOutstandingInvoice: ${billing-rest.endpointPrefix}/hasOutstandingInvoice
@@ -14,6 +14,7 @@ payment-reminder:
   invalidInvoiceId: ${payment-reminder.urlPrefix}/payment_reminder_label_invalid_invoice_id
   currentInvoicePaidStillOutstanding : ${payment-reminder.urlPrefix}/payment_reminder_label_current_invoice_paid_but_still_outstanding
   serverError : ${payment-reminder.urlPrefix}/payment_reminder_label_something_is_wrong_with_the_server_please_try_again
+  paymentSuccessfulButFailedToProcess: ${payment-reminder.urlPrefix}/payment_reminder_label_payment_successful_but_we_failed_to_process
 
 app:
   name: payment_service
