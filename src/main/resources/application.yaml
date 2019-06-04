@@ -1,4 +1,4 @@
- billing-rest:
+billing-rest:
   endpointPrefix: ${app.billingServerPrefix}/billing/rest/v1/paymentReminder
   getInvoice: ${billing-rest.endpointPrefix}/getInvoice
   hasOutstandingInvoice: ${billing-rest.endpointPrefix}/hasOutstandingInvoice
