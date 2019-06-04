@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.NoSuchElementException;
 
 @Service
 public class PaymentProcessor {
@@ -58,7 +59,7 @@ public class PaymentProcessor {
         /*
          * Step 1 : check if the payment is successful or not
          */
-        if(paymentIsUnsuccessful(status)){
+        if (paymentIsUnsuccessful(status)){
             return paymentReminderConfiguration.getPaymentUnsuccessful() + getLocale();
         }
 
@@ -67,9 +68,15 @@ public class PaymentProcessor {
          */
 
         IbanValidationRequest ibanValidationRequest = ibanValidationService.getIbanValidationRequest(transactionId);
-        if(null != ibanValidationRequest.getPaymentKey()){
+        if (null == ibanValidationRequest) {
+            logger.error(String.format("Customer paid, but we could not fetch request object for transactionId: %s", transactionId));
+            //we need to say payment was successful but we couldn't update the information 
+            return paymentReminderConfiguration.getPaymentSuccessfulButFailedToProcess() + getLocale();
+        }
+        
+        if (null != ibanValidationRequest.getPaymentKey()) {
             logger.info("This transaction is already processed and successful");
-            return paymentReminderConfiguration.getPaymentSuccessful();
+            return paymentReminderConfiguration.getPaymentSuccessful() + getLocale();
         }
 
         /*
@@ -82,25 +89,37 @@ public class PaymentProcessor {
          * Step 4 : Let the billing know that invoice is paid
          */
         Long invoiceId = Long.valueOf(ibanValidationRequest.getInvoiceId());
-        if(!billingRestClient.updateInvoiceToPaid(invoiceId)){
+        if (!billingRestClient.updateInvoiceToPaid(invoiceId)) {
             logger.info("Couldn't update Invoice status to Paid, probable cause is : Billing Server is down");
-            return paymentReminderConfiguration.getServerError() + getLocale();
+            return paymentReminderConfiguration.getPaymentSuccessfulButFailedToProcess() + getLocale();
+        }
+        
+        Long customerId = null;
+        try {
+            customerId = billingRestClient.getCustomerId(invoiceId);
+        } catch (NoSuchElementException e) {
+            logger.error(e.getMessage());
+            return paymentReminderConfiguration.getPaymentSuccessfulButFailedToProcess() + getLocale();
         }
 
         /*
          * Step 5 : Check whether we can proceed or not, we can't activate customer if there is outstanding invoice.
          */
-        if(billingRestClient.hasOutStandingInvoiceByInvoiceId(invoiceId)){
+        boolean hasOutStandingInvoice = billingRestClient.hasOutStandingInvoice(customerId);
+        if (billingRestClient.hasRemoteServerErrorOccurred()) {
+            logger.error(String.format("Could not get billing response to check if customerId: %ld has outstanding invoice", customerId));
+            return paymentReminderConfiguration.getPaymentSuccessfulButFailedToProcess() + getLocale();
+        }
+        if (hasOutStandingInvoice) {
             return paymentReminderConfiguration.getPaymentSuccessfulStillOutstanding() + getLocale();
         }
 
         /*
          * Step 6 : Now we can activate the customer
          */
-        Long customerId = billingRestClient.getCustomerId(invoiceId);
         logger.info(String.format("Activating customer, customer id = %d", customerId));
         if(!yellowSoapRestClient.activateCustomer(customerId)){
-            return paymentReminderConfiguration.getServerError();
+            return paymentReminderConfiguration.getPaymentSuccessfulButFailedToProcess() + getLocale();
         }
         logger.info(String.format("Successfully activated customer , customer id = %d", customerId));
 
@@ -133,6 +152,11 @@ public class PaymentProcessor {
         }
 
         BuckarooTransactionResponse response = getTransactionResponse(transactionId);
+        if (null == response) {
+            logger.error("Couldn't fetch transaction status from buckaroo!");
+            return paymentReminderConfiguration.getServerError();
+        }
+        
         String invoiceId = response.getInvoice();
         updateLocaleIfYouCan(invoiceId);
         logger.info(String.format("Processing Buckaroo Transaction with callback Key = %s", callbackKey));

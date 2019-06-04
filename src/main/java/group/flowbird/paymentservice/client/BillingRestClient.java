@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.Calendar;
+import java.util.NoSuchElementException;
 
 @Component
 public class BillingRestClient {
@@ -29,23 +30,23 @@ public class BillingRestClient {
         return restClient.remoteServerErrorOccurred;
     }
 
-    public Long getCustomerId(Long invoiceId){
-        if(null != invoiceDTO && invoiceId.equals(invoiceDTO.getId()))return invoiceDTO.getCustomerId();
+    public Long getCustomerId(Long invoiceId) throws NoSuchElementException {
+        
+        if(null != invoiceDTO && invoiceId.equals(invoiceDTO.getId())) {
+            return invoiceDTO.getCustomerId();
+        }
+        
         invoiceDTO = getInvoice(invoiceId);
-
-        if(invoiceDTO != null)return invoiceDTO.getCustomerId();
-
-        return null;
+        if(null != invoiceDTO) {
+            return invoiceDTO.getCustomerId();
+        }
+        throw new NoSuchElementException("Could not find any invoice for invoiceId: " + invoiceId);
     }
+    
     public InvoiceDTO getInvoice(Long invoiceId){
         String url = billingConfiguration.getGetInvoice() + "/" + invoiceId;
         invoiceDTO = restClient.performRequest("", HttpMethod.GET, url, InvoiceDTO.class);
         return invoiceDTO;
-    }
-
-    public boolean hasOutStandingInvoiceByInvoiceId(Long invoiceId){
-        Long customerId = getCustomerId(invoiceId);
-        return hasOutStandingInvoice(customerId);
     }
 
     public boolean hasOutStandingInvoice(Long customerId) {
@@ -68,6 +69,7 @@ public class BillingRestClient {
         invoiceDTO.setPaid(true);
 
         restClient.performRequest(RestUtils.mapStringFromObject(invoiceDTO), HttpMethod.POST, url, HttpStatus.class);
-        return restClient.getResponseEntity().getStatusCode() == HttpStatus.OK;
+        return null != restClient.getResponseEntity() &&
+               restClient.getResponseEntity().getStatusCode().equals(HttpStatus.OK);
     }
 }

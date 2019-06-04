@@ -24,8 +24,8 @@ public class YellowSoapRestClient {
         String url = applicationConfiguration.getActivateCustomerEndpointPrefix() + "/" + customerId + "/" + applicationConfiguration.getYellowsoapToken();
         try{
             restClient.performRequest("", HttpMethod.POST, url, String.class);
-            logger.info(String.format("Successfully activated customer , customer id = %d", customerId));
-            return restClient.getResponseEntity().getStatusCode() == HttpStatus.OK;
+            return null != restClient.getResponseEntity() &&
+                   restClient.getResponseEntity().getStatusCode().equals(HttpStatus.OK);
 
         }catch (ResourceAccessException ex){
             logger.error("YellowSoap Server is down, please check");
