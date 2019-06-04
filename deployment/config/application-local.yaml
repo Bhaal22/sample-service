@@ -1,0 +1,22 @@
+    ####################### Service Configuration #######################
+server:
+    port: 8083
+
+    ####################### Service Discovery Configuration #######################
+app:
+    billingServerPrefix: http://localhost:5080
+    myYellowbrickServerPrefix: http://localhost:8082
+    yellowsoapServerPrefix: http://localhost:8080/rest/v1
+
+  ###################### Logging Configuration #######################
+logging:
+  path: /tmp/payment-service
+
+    ####################### Database Configuration #######################
+
+spring:
+  datasource:
+    driverClassName: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@10.30.101.113:1521:ORCDEV 
+    username: DEV_NL_BRICKPARKING
+    password: DEV_NL_BRICKPARKING

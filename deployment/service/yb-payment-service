@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# If you wanna copy paste this script for another service, just change the name PROCESS_NAME
+#
+# chkconfig:
+# description:
+
+# Source function library.
+# /etc/init.d/functions
+
+ROOT='/usr/share/yb-payment-service'
+PROCESS_NAME='payment-service'
+
+process_pid() {
+    echo `ps -aux | grep "$PROCESS_NAME" | grep jar | grep -v grep | awk '{ print $2 }'`
+}
+
+start() {
+    pid=$(process_pid)
+    if [ -n "$pid" ]; then
+        echo "$PROCESS_NAME is already running (pid: $pid)"
+    else
+        echo "Starting $PROCESS_NAME"
+        $ROOT/bin/startup.sh &
+        echo "$PROCESS_NAME started"
+    fi
+   return 0
+}
+
+stop() {
+    pid=$(process_pid)
+    if [ -n "$pid" ]; then
+        echo "Stopping $PROCESS_NAME ($pid)"
+        kill -9 $pid
+    else
+        echo "$PROCESS_NAME is not running"
+    fi
+
+    return 0
+}
+
+status() {
+    pid=$(process_pid)
+    if [ -n "$pid" ]; then
+        echo "$PROCESS_NAME is running with pid: $pid"
+    else
+        echo "$PROCESS_NAME is not running"
+    fi
+}
+
+case "$1" in
+ start)
+        start
+        ;;
+ stop)
+        stop
+        ;;
+ restart)
+       stop
+       start
+       ;;
+ status)
+       status
+       ;;
+*)
+        echo "Usage: $0 {start|stop|restart|status}"
+        exit 1
+        ;;
+esac
+exit 0

@@ -1,17 +1,16 @@
 package group.flowbird.paymentservice.client;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import nl.yellowbrick.buckarooclient.utils.RestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+
 
 @Component
 public class RestClient {
@@ -22,6 +21,9 @@ public class RestClient {
     @Getter
     ResponseEntity<String> responseEntity;
 
+
+    public boolean remoteServerErrorOccurred = false;
+
     private HttpEntity<String> getEntitiTemplate(String paramString){
         HttpHeaders headers = new HttpHeaders();
         headers.set("Content-Type", "application/json;charset=UTF-8");
@@ -31,6 +33,7 @@ public class RestClient {
     }
 
     protected <T> T performRequest(String params, HttpMethod httpMethod, String serviceUrl, Class<T> classType){
+        remoteServerErrorOccurred = false;
         HttpEntity<String> entity = getEntitiTemplate(params);
         try {
             responseEntity = null;
@@ -46,14 +49,22 @@ public class RestClient {
                     break;
             }
             String responseString = responseEntity.getBody();
+            if(null == responseString)return null;
+
             return RestUtils.mapObjectFromString(responseString, classType);
         } catch (HttpClientErrorException e) {
-            HttpStatus statusCode = e.getStatusCode();
             e.printStackTrace();
             logger.error("HttpClientError Exception occurred, msg = " + e.getMessage());
-        } catch (Exception e) {
+            remoteServerErrorOccurred = true;
+        }catch (ResourceAccessException ex){
+            ex.printStackTrace();
+            logger.error("Remote server is down. msg = " + ex.getMessage());
+            remoteServerErrorOccurred = true;
+        }
+        catch (Exception e) {
             e.printStackTrace();
             logger.error("Unexpected error happened , msg = ", e.getMessage());
+            remoteServerErrorOccurred = true;
         }
         return null;
     }

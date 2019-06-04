@@ -9,7 +9,10 @@ public class InvoiceDTO {
     private long id;
     private long customerId;
     private String status;
-    private long amount;
+    private double amount;
     private String email;
     private Date paidOn;
+    private boolean isPaid;
+    private boolean inPaymentReminder;
+    private String locale;
 }

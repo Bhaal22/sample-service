@@ -1,11 +1,7 @@
 package group.flowbird.paymentservice;
 
-import com.sun.org.apache.bcel.internal.generic.DADD;
-import group.flowbird.paymentservice.client.BillingRestClient;
-import group.flowbird.paymentservice.client.ClientDTO.InvoiceDTO;
-import group.flowbird.paymentservice.client.YellowSoapRestClient;
-import group.flowbird.paymentservice.configuration.DataSourceConfiguration;
-import group.flowbird.paymentservice.processor.PaymentProcessor;
+import group.flowbird.paymentservice.configuration.ApplicationConfiguration;
+import group.flowbird.paymentservice.configuration.PaymentReminderConfiguration;
 import nl.yellowbrick.buckarooclient.dao.ConfigDao;
 import nl.yellowbrick.buckarooclient.dao.IbanValidationDao;
 import nl.yellowbrick.buckarooclient.dao.impl.ConfigDaoImpl;
@@ -22,10 +18,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import javax.sql.DataSource;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"group.flowbird"})
@@ -33,16 +27,15 @@ import javax.sql.DataSource;
 public class PaymentServiceApplication {
 
     @Autowired
-    IbanValidationService ibanValidationService;
+    ApplicationConfiguration applicationConfiguration;
+
+    @Autowired
+    PaymentReminderConfiguration paymentReminderConfiguration;
+
     private static final Logger logger = LoggerFactory.getLogger(PaymentServiceApplication.class);
 	public static void main(String[] args) {
         logger.info("Starting Spring Boot application : PaymentService");
         ConfigurableApplicationContext context = SpringApplication.run(PaymentServiceApplication.class, args);
-
-        PaymentProcessor paymentProcessor = context.getBean(PaymentProcessor.class);
-        YellowSoapRestClient yellowSoapRestClient = context.getBean(YellowSoapRestClient.class);
-        yellowSoapRestClient.activateCustomer(234353L);
-        //paymentProcessor.processRedirectURL(6354551L);
 	}
 
     @Bean

@@ -1,0 +1,2 @@
+#!/bin/bash
+docker build --build-arg LOG_DIR=/tmp/ --build-arg CONFIG=application-SIT-BE.yaml --tag kabirsohel/payment-service:be-sit .
