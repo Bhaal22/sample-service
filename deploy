@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo 'enabled tag be-sit'
+echo 'stopping docker container kabirsohel/payment-service:be-sit'
+docker stop payment-service-instance
+docker rm payment-service-instance
+docker run -d -it -p 2500:80 --name=payment-service-instance kabirsohel/payment-service:be-sit
+
+echo 'Payment-Service app is Successfully deployed, listening to port 2500 , hit /index.html for swagger'
