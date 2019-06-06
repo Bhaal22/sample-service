@@ -22,5 +22,5 @@ spring:
   datasource:
     driverClassName: oracle.jdbc.OracleDriver
     url: jdbc:oracle:thin:@(DESCRIPTION = (FAILOVER = ON)(LOAD_BALANCE = ON)(ADDRESS = (PROTOCOL = TCP)(HOST = scan-ybi-tst.waysis.local)(PORT = 1521)) (ADDRESS = (PROTOCOL = TCP)(HOST = scan-ybi-tst.waysis.local)(PORT = 1521))(CONNECT_DATA = (SERVER = DEDICATED)(SERVICE_NAME = TELEPAY)(FAILOVER_MODE=(TYPE=select)(METHOD=basic))))
-    username: ACC_NL_BRICKPARKING
-    password: ACC_NL_BRICKPARKING
+    username: TELEPAY
+    password: TELEPAY
