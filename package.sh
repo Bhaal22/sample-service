@@ -5,15 +5,15 @@ DEST=$2
 ENV=$3
 
 VERSION='0.0.1'
-ARTIFACT_NAME="payment-service-$VERSION-SNAPSHOT.jar"
+ARTIFACT_NAME="payment-service-$VERSION.jar"
 
 echo $ARTIFACT_NAME
 
 if [ ! -d "$DEST" ]; then
-    mkdir -p $DEST
+    mkdir -p $DEST/config
 else
     echo "$DEST already exist ..."
-    rm -rf $DEST && mkdir -p $DEST
+    rm -rf $DEST && mkdir -p $DEST/config
 fi
 
 cp -r $SRC/deployment/* $DEST/
